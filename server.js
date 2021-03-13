@@ -2,11 +2,13 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
+const formatMessage=require('./utils/messages');
 
 
 const app=express();
 const server = http.createServer(app);
 const io = socketio(server);
+const botName="Kunal's Chat";
 
 //Set Static Folder
 
@@ -17,20 +19,20 @@ app.use(express.static(path.join(__dirname,'public')));
 
 io.on('connection', socket=>{
     console.log("new connection..");
-    socket.emit('message',"Welcome to Kunal's chat room");
+    socket.emit('message',formatMessage(botName,"Welcome to Kunal's chat room"));
 
 
     //broadcast to everyone
-    socket.broadcast.emit('message',"A user joined the chat");
+    socket.broadcast.emit('message',formatMessage(botName,"A user joined the chat"));
 
     //when someone disconnects
     socket.on('disconnect',message=>{
-        io.emit('message',"A user has left the chat");
+        io.emit('message',formatMessage(botName,"A user has left the chat"));
 
     });
     //listen for chat message
     socket.on('chatMessage',msg=>{
-        io.emit('message',msg);
+        io.emit('message',formatMessage('user',msg));
 
     })
 
