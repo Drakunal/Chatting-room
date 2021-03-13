@@ -17,6 +17,17 @@ app.use(express.static(path.join(__dirname,'public')));
 
 io.on('connection', socket=>{
     console.log("new connection..");
+    socket.emit('message',"Welcome to Kunal's chat room");
+
+
+    //broadcast to everyone
+    socket.broadcast.emit('message',"A user joined the chat");
+
+    //when someone disconnects
+    socket.on('disconnect',message=>{
+        io.emit('message',"A user has left the chat");
+
+    })
 });
 
 
