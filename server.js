@@ -1,14 +1,26 @@
 const path = require('path');
 const http = require('http');
 const express = require('express');
-// const { ppid } = require('node:process');
+const socketio = require('socket.io');
+
 
 const app=express();
+const server = http.createServer(app);
+const io = socketio(server);
 
 //Set Static Folder
 
 app.use(express.static(path.join(__dirname,'public')));
 
+
+//run when a client connects
+
+io.on('connection', socket=>{
+    console.log("new connection..");
+});
+
+
+
 const PORT = process.env.PORT||3000;
 
-app.listen(PORT,()=>console.log(`Server running on port : ${PORT}`));
+server.listen(PORT,()=>console.log(`Server running on port : ${PORT}`));
