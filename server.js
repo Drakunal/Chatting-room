@@ -3,6 +3,8 @@ const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
 const formatMessage=require('./utils/messages');
+const {userJoin,getCurrentUser,userLeave,getRoomUsers}=require('./utils/users');
+
 
 
 const app=express();
@@ -18,21 +20,45 @@ app.use(express.static(path.join(__dirname,'public')));
 //run when a client connects
 
 io.on('connection', socket=>{
-    console.log("new connection..");
-    socket.emit('message',formatMessage(botName,"Welcome to Kunal's chat room"));
+    // console.log("new connection..");
+    socket.on('joinRoom',({username,room})=>{
+
+        const user=userJoin(socket.id,username,room);
+        socket.join(user.room);
+        socket.emit('message',formatMessage(botName,"Welcome to Kunal's chat room"));
 
 
-    //broadcast to everyone
-    socket.broadcast.emit('message',formatMessage(botName,"A user joined the chat"));
+        //broadcast to everyone
+        socket.broadcast.to(user.room).emit('message',formatMessage(botName,`${user.username} joined the chat`));
 
-    //when someone disconnects
-    socket.on('disconnect',message=>{
-        io.emit('message',formatMessage(botName,"A user has left the chat"));
+        //users and room info
+        io.to(user.room).emit('roomUsers',{
+            room:user.room,
+            users:getRoomUsers(user.room)
+        });
+    
+        //when someone disconnects
+        socket.on('disconnect',message=>{
+            const user=userLeave(socket.id);
+            if(user){
+
+                io.to(user.room).emit('message',formatMessage(botName,`${user.username} has left the chat`));
+                //users and room info
+        io.to(user.room).emit('roomUsers',{
+            room:user.room,
+            users:getRoomUsers(user.room)
+        });
+            }
+            
+    
+        });
 
     });
+   
     //listen for chat message
     socket.on('chatMessage',msg=>{
-        io.emit('message',formatMessage('user',msg));
+        const user=getCurrentUser(socket.id);
+        io.to(user.room).emit('message',formatMessage(user.username,msg));
 
     })
 
